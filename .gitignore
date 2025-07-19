@@ -1,0 +1,37 @@
+# --- General ---
+.DS_Store
+*.log
+*.tmp
+*.swp
+
+# --- React (client) ---
+client/node_modules/
+client/build/
+client/.env
+client/.next/
+client/.parcel-cache/
+client/.turbo/
+client/.eslintcache
+
+# --- Spring Boot (server) ---
+server/target/
+server/.classpath
+server/.project
+server/.settings/
+server/.idea/
+server/.vscode/
+server/*.iml
+server/logs/
+
+# --- Gradle (optional) ---
+server/build/
+server/.gradle/
+
+# --- IntelliJ / VSCode IDE ---
+*.iml
+.idea/
+.vscode/
+
+# --- OS-specific files ---
+Thumbs.db
+ehthumbs.db
