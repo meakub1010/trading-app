@@ -21,7 +21,7 @@ const Home = () => {
           clearTimeout(timeout.current);
         }
       }
-    }, [])
+    }, []);
 
     const onMessage = useCallback((msg: Object) => {
       console.log('masg', msg);
