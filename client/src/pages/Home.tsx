@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Stock } from "../types/types";
 import { Blotter } from "../features/blotter/components/Blotter";
 import { Market } from "../features/market/components/Market";
@@ -6,86 +6,61 @@ import { Controlls } from "../features/components/Controls";
 import { useWebSocket } from "../hooks/useWebSocket";
 
 const Home = () => {
-    const [stocks, setStocks] = useState<Stock[]>([
-    {
-      id: 1,
-      availableShares: 10,
-      ticker: 'AAPL',
-      name: 'Apple Inc.',
-      quantity: 0,
-      price: 150,
-      marketCap: 2400000000000,
-    },
-    {
-      id: 2,
-      availableShares: 5,
-      ticker: 'GOOGL',
-      name: 'Alphabet Inc.',
-      quantity: 0,
-      price: 2800,
-      marketCap: 1800000000000,
-    },
-  ]);
+    const [stocks, setStocks] = useState<Stock[]>([]);
 
     const onConnect = useCallback(() => console.log('connected'), []);
     const onDisconnect = useCallback(() => console.log('disconnected'), []);
     const onError = useCallback((err:any) => console.log(err), []);
-    
-    const onMessage = useCallback((msg: any) => {
-        const map = new Map<string, Stock>(Object.entries(msg));
-        const arr: Stock[] = Array.from(map.values());
-        requestIdleCallback(() => {
-            setStocks(prev => {
-                const map = new Map(prev.map(item => [item.id, item]));
-
-                for (const newItem of arr) {
-                    map.set(newItem.id, { ...map.get(newItem.id), ...newItem });
-                }
-
-                return Array.from(map.values());
-            });
-        });
-        
-
-    }, []);
-
 
     const messageQueue = useRef<Stock[]>([]);
     const timeout = useRef<NodeJS.Timeout | null>(null);
 
-    const onMessage2 = useCallback((msg: Object) => {
-        const newStocks = Object.values(msg); // or transform as needed
-        messageQueue.current.push(...newStocks);
+    useEffect(() => {
+      return () => {
+        if(timeout.current){
+          clearTimeout(timeout.current);
+        }
+      }
+    }, [])
 
-        if (timeout.current) return;
+    const onMessage = useCallback((msg: Object) => {
+      console.log('masg', msg);
+      const newStocks = Array.isArray(msg) ? msg : [msg];
+      messageQueue.current.push(...newStocks);
 
-        timeout.current = setTimeout(() => {
-            setStocks(prev => {
-            const map = new Map(prev.map(item => [item.id, item]));
+      if (timeout.current) return;
 
-            for (const newItem of messageQueue.current) {
-                map.set(newItem.id, { ...map.get(newItem.id), ...newItem });
-            }
+      // make sure clear the timeout on unmount
+      timeout.current = setTimeout(() => {
+          setStocks(prevStocks => {
+              const stockMap = new Map(prevStocks.map(stock => [stock.id, stock]));
 
-            messageQueue.current = [];
-            timeout.current = null;
-            console.log('processed new messages');
-            const result: Stock[] = Array.from(map.values());
-            console.log(result.length)
-            return result;
-            });
-        }, 100); // Batch every 100ms
+              for (const newItem of messageQueue.current) {
+                  const updatedItem = {
+                      ...stockMap.get(newItem.id),
+                      ...newItem
+                  };
+                  stockMap.set(newItem.id, updatedItem);
+              }
+
+              messageQueue.current = [];
+              timeout.current = null;
+
+              return Array.from(stockMap.values());
+          });
+      }, 100);
+
     }, []);
 
     const {client, isConnected} = useWebSocket('http://localhost:8080/ws', {
-        onMessage: onMessage2,
+        onMessage: onMessage,
         onConnect: onConnect,
         onDisconnect: onDisconnect,
         onError: onError,
   });
 
 
-  const handleBuy = useCallback((id: number, qty: number) => {
+  const handleBuy = useCallback((id: string, qty: number) => {
     console.log('handleBuy', id, qty);
     setStocks(prev =>
       prev.map(s =>
@@ -96,7 +71,7 @@ const Home = () => {
     );
   },[]);
 
-  const handleSell = useCallback((id: number, qty: number) => {
+  const handleSell = useCallback((id: string, qty: number) => {
     console.log('handleSell', id, qty);
   }, []);
 
