@@ -27,6 +27,7 @@ public class MarketSimulationService {
         if (isRunning) return "Simulation already running.";
 
         isRunning = true;
+
         simulationTask = scheduler.scheduleAtFixedRate(() -> {
             if (!isRunning) return;
 
@@ -49,7 +50,7 @@ public class MarketSimulationService {
             // Simulate a trade (you can also POST this to a trade endpoint, log, etc.)
             System.out.printf("Simulated %s %d of %s at $%.2f%n", action, quantity, ticker, price);
 
-        }, 0, 2, TimeUnit.SECONDS); // every 2 seconds
+        }, 0, 5, TimeUnit.SECONDS); // every 5 seconds
 
         return "Simulation started.";
     }

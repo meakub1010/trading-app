@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import developer.interview.market_trading_app_server.entity.Stock;
+import developer.interview.market_trading_app_server.entity.TradeRequest;
 import developer.interview.market_trading_app_server.service.MarketService;
 import developer.interview.market_trading_app_server.service.MarketSimulationService;
 
@@ -23,13 +24,13 @@ public class MarketController {
     }
 
     @PostMapping("/buy")
-    public void buy(@RequestBody Stock req) {
-        marketService.buy(req.getId(), req.getQuantity());
+    public void buy(@RequestBody TradeRequest req) {
+        marketService.buy(req.stockId, req.quantity);
     }
 
     @PostMapping("/sell")
-    public void sell(@RequestBody Stock req) {
-        marketService.sell(req.getId(), req.getQuantity());
+    public void sell(@RequestBody TradeRequest req) {
+        marketService.sell(req.stockId, req.quantity);
     }
 
     @GetMapping
@@ -38,7 +39,7 @@ public class MarketController {
     }
 
     @GetMapping("/simulate/start")
-    public String simulate(){
+    public String simulate() {
 
         return "Simulation started";
     }
