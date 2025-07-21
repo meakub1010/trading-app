@@ -4,6 +4,8 @@ import { Blotter } from "../features/blotter/components/Blotter";
 import { Market } from "../features/market/components/Market";
 import { Controlls } from "../features/components/Controls";
 import { useWebSocket } from "../hooks/useWebSocket";
+import { http } from "../api/client";
+import { marketApi } from "../api/marketApi";
 
 const Home = () => {
     const [stocks, setStocks] = useState<Stock[]>([]);
@@ -24,7 +26,6 @@ const Home = () => {
     }, []);
 
     const onMessage = useCallback((msg: Object) => {
-      console.log('masg', msg);
       const newStocks = Array.isArray(msg) ? msg : [msg];
       messageQueue.current.push(...newStocks);
 
@@ -34,7 +35,7 @@ const Home = () => {
       timeout.current = setTimeout(() => {
           setStocks(prevStocks => {
               const stockMap = new Map(prevStocks.map(stock => [stock.id, stock]));
-
+              console.log('processed', messageQueue.current?.length);
               for (const newItem of messageQueue.current) {
                   const updatedItem = {
                       ...stockMap.get(newItem.id),
@@ -45,7 +46,6 @@ const Home = () => {
 
               messageQueue.current = [];
               timeout.current = null;
-
               return Array.from(stockMap.values());
           });
       }, 100);
@@ -60,19 +60,26 @@ const Home = () => {
   });
 
 
-  const handleBuy = useCallback((id: string, qty: number) => {
-    console.log('handleBuy', id, qty);
-    setStocks(prev =>
-      prev.map(s =>
-        s.id === id && s.availableShares >= qty
-          ? { ...s, availableShares: s.availableShares - qty, quantity: s.quantity + qty }
-          : s
-      )
-    );
-  },[]);
+  // const handleBuy = useCallback((id: string, qty: number) => {
+  //   console.log('handleBuy', id, qty);
+  //   setStocks(prev =>
+  //     prev.map(s =>
+  //       s.id === id && s.availableShares >= qty
+  //         ? { ...s, availableShares: s.availableShares - qty, quantity: s.quantity + qty }
+  //         : s
+  //     )
+  //   );
+  // },[]);
+
+
+  const handleBuy = useCallback((id: String) => {
+    console.log('buy')
+    marketApi.buy(id, 1);
+  }, []);
 
   const handleSell = useCallback((id: string, qty: number) => {
-    console.log('handleSell', id, qty);
+    console.log('sell');
+    marketApi.sell(id, 1);
   }, []);
 
   return (

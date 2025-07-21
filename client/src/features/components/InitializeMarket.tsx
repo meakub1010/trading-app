@@ -1,12 +1,11 @@
+import { marketApi } from "../../api/marketApi";
 
 export const InitializeMarket = () => {
 
     function initMarket(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
         event.preventDefault();
-        // Example: Initialize market logic here
-        // This could be an API call or state update
         console.log("Market initialized!");
-        // TODO: Replace with actual initialization logic
+        marketApi.initMarket();
     }
 
 

@@ -1,4 +1,4 @@
-import { Client, Message, Stomp } from "@stomp/stompjs";
+import { Client, Message, Stomp, StompSubscription } from "@stomp/stompjs";
 import { useCallback, useEffect, useRef } from "react";
 import SockJS from "sockjs-client";
 
@@ -26,6 +26,8 @@ export const useWebSocket = (
     }: UseWebSocketOptions = {}
 ) => {
     const socketClientRef = useRef<Client | null>(null);
+    const subscriptionRef = useRef<StompSubscription | null>(null);
+
     const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const reconnectAttemptsRef = useRef(0);
 
@@ -40,8 +42,12 @@ export const useWebSocket = (
             reconnectAttemptsRef.current = 0; // reset
             if(onConnect) onConnect();
 
+            if(subscriptionRef.current){
+                subscriptionRef.current.unsubscribe();
+                subscriptionRef.current = null;
+            }
             // subscribe to the topic
-            stompClient.subscribe(topic, (message: Message) => {
+            subscriptionRef.current = stompClient.subscribe(topic, (message: Message) => {
                 const parsed = JSON.parse(message.body);
                 if(onMessage) onMessage(parsed);
             });
@@ -79,6 +85,7 @@ export const useWebSocket = (
     useEffect(() => {
         connect();
         return () => {
+            if(subscriptionRef.current) subscriptionRef.current.unsubscribe();
             if(socketClientRef.current) socketClientRef.current.deactivate();
             if(reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
         }

@@ -8,10 +8,10 @@ export const Market = ({stocks, onCallback, actionTitle}: StockProps) => {
         <div>
             <h2 className="mb-3">Market Stocks</h2>
             <div className="table-responsive">
-                <table className="table table-bordered table-hover table-striped align-middle">
-                    <thead>
+                <table className="table table-bordered table-hover table-striped align-middle table-sm m-0 text-nowrap">
+                    <thead className="table-light text-xs">
                         <tr>
-                            <th scope="col">Buy</th>
+                            <th scope="col">Action</th>
                             <th scope="col">Ticker</th>
                             <th scope="col">Quantity</th>
                             <th scope="col">Available Shares</th>
