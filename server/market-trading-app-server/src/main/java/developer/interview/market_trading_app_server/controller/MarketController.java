@@ -2,9 +2,12 @@ package developer.interview.market_trading_app_server.controller;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import developer.interview.market_trading_app_server.entity.Stock;
 import developer.interview.market_trading_app_server.entity.TradeRequest;
@@ -13,7 +16,6 @@ import developer.interview.market_trading_app_server.service.MarketSimulationSer
 
 @RestController
 @RequestMapping("/api/market")
-@CrossOrigin(origins = "*")
 public class MarketController {
     @Autowired MarketService marketService;
     @Autowired MarketSimulationService marketSimulationService;
@@ -39,14 +41,16 @@ public class MarketController {
     }
 
     @GetMapping("/simulate/start")
-    public String simulate() {
-
+    public String simulate() throws JsonProcessingException {
+       if (marketService.getMarket() == null) return null;
+        List<String> stockIds = marketService.getMarket().stream().map(Stock::getId).collect(Collectors.toList());;
+        marketSimulationService.startSimulation(stockIds);
         return "Simulation started";
     }
 
     @GetMapping("/simulate/stop")
     public String stop(){
-        
+        marketSimulationService.stopSimulation();
         return "Simulation stopped";
     }
 

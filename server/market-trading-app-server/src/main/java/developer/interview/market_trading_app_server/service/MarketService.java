@@ -19,17 +19,9 @@ public class MarketService {
 
 
     private Map<String, Stock> market = new ConcurrentHashMap<>();
-    private Map<String, Stock> purchasedMap = new ConcurrentHashMap<>(); 
     
     public List<Stock> initMarket() {
         market.clear();
-        // for (int i = 1; i <= 10; i++) {
-        //     String id = UUID.randomUUID().toString();
-        //     Stock s = new Stock(id, "TICK" + i, "Stock-" + i, 100 + i, 50 + (Math.random() * 100), 100 + i, 0);
-        //     market.put(id, s);
-        // }
-
-
         String[] tickers = {
         "AAPL", "MSFT", "GOOG", "AMZN", "TSLA", "META", "NVDA", "NFLX", "INTC", "AMD",
         "BABA", "UBER", "LYFT", "ORCL", "IBM", "ADBE", "CRM", "SHOP", "SQ", "PYPL",
@@ -58,8 +50,7 @@ public class MarketService {
             availableQuantity,
             marketCap
         );
-
-            market.put(id, stock);
+        market.put(id, stock);
         }
 
         List<Stock> marketData = new ArrayList<>(market.values());
@@ -71,6 +62,13 @@ public class MarketService {
 
      public Collection<Stock> getMarket() {
         return market.values();
+    }
+
+    public String getRandomStockId() {
+        if (market.isEmpty()) return null;
+        List<String> keys = new ArrayList<>(market.keySet());
+        Random random = new Random();
+        return keys.get(random.nextInt(keys.size()));
     }
 
     public void buy(String id, int qty) {
@@ -86,8 +84,7 @@ public class MarketService {
         market.put(id, stock);
         
         // publish
-        //messagingTemplate.convertAndSend("/topic/stock",stock);
-        messagingTemplate.convertAndSend("/topic/stock",new Stock[]{stock});
+        messagingTemplate.convertAndSend("/topic/stock", new Stock[]{stock});
     }
 
     public void sell(String id, int qty) {
@@ -101,6 +98,6 @@ public class MarketService {
         stock.setMarketCap(stock.getQuantity() * stock.getPrice());
 
         // publish
-        messagingTemplate.convertAndSend("/topic/stock",new Stock[]{stock});
+        messagingTemplate.convertAndSend("/topic/stock", new Stock[]{stock});
     }
 }
