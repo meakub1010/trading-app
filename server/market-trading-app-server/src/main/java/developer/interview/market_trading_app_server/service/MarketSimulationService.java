@@ -8,6 +8,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,54 +28,52 @@ public class MarketSimulationService {
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
     private ScheduledFuture<?> simulationTask;
-    private volatile boolean isRunning = false;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
     private final Random random = new Random();
-
+    private final String WS_URL = "http://localhost:8080/api";
 
     public synchronized String startSimulation(List<String> keys)  throws JsonProcessingException {
-        if (isRunning) return "Simulation already running.";
+        if (!isRunning.compareAndSet(false, true)) return "Simulation already running.";
 
-        isRunning = true;
-
+   
         simulationTask = scheduler.scheduleAtFixedRate(() -> {
-            if (!isRunning) return;
+            if (!isRunning.get()) return;
 
             try {
                 String actionUrl = random.nextBoolean() ? "/market/buy" : "/market/sell";
-            int quantity = random.nextInt(5) + 1;
-            String ticker = randomTicker();
-            double price = Math.round((100 + random.nextDouble() * 50) * 100.0) / 100.0;
+                int quantity = random.nextInt(5) + 1;
+                double price = Math.round((100 + random.nextDouble() * 50) * 100.0) / 100.0;
 
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("stockId", keys.get(random.nextInt(keys.size())));
-            payload.put("quantity", quantity);
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("stockId", keys.get(random.nextInt(keys.size())));
+                payload.put("quantity", quantity);
 
-            ObjectMapper mapper = new ObjectMapper();
-            String jsonPayload = mapper.writeValueAsString(payload);
+                ObjectMapper mapper = new ObjectMapper();
+                String jsonPayload = mapper.writeValueAsString(payload);
 
-            webClient.post()
-            .uri("http://localhost:8080/api" + actionUrl)
-            .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .bodyValue(jsonPayload)
-            .retrieve()
-            .bodyToMono(String.class)
-            .subscribe(response -> {
-                System.out.println("Response: " + response);
-            }, error -> {
-                System.err.println("Error: " + error.getMessage());
-            });
-            System.out.printf("Simulated %s %d of %s at $%.2f%n", actionUrl, quantity, ticker, price);
+                webClient.post()
+                .uri(WS_URL + actionUrl)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .bodyValue(jsonPayload)
+                .retrieve()
+                .bodyToMono(String.class)
+                .subscribe(response -> {
+                    System.out.println("Response: " + response);
+                }, error -> {
+                    System.err.println("Error: " + error.getMessage());
+                });
+                System.out.printf("Simulated %s %d of %s at $%.2f%n", actionUrl, quantity, payload.get("stockId"), price);
             }
             catch(JsonProcessingException e){
-                e.printStackTrace();
+                e.getStackTrace();
             }
-        }, 0, 10, TimeUnit.NANOSECONDS);
+        }, 0, 100, TimeUnit.MILLISECONDS);
 
         return "Simulation started.";
     }
 
     public synchronized String stopSimulation() {
-        isRunning = false;
+        isRunning.set(false);
         System.out.println("Simulation stopping");
         if (simulationTask != null) {
             System.out.println("Simulation ..stopping");
@@ -84,13 +83,9 @@ public class MarketSimulationService {
         return "Simulation stopped.";
     }
 
-    private String randomTicker() {
-        String[] tickers = {"AAPL", "GOOG", "AMZN", "MSFT", "TSLA"};
-        return tickers[random.nextInt(tickers.length)];
-    }
-
     @PreDestroy
     public void shutdown() {
+        isRunning.set(false);
         scheduler.shutdownNow();
     }
 }

@@ -17,24 +17,23 @@ public class MarketService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
-
-    private Map<String, Stock> market = new ConcurrentHashMap<>();
-    
-    public List<Stock> initMarket() {
-        market.clear();
-        String[] tickers = {
+    private static final String[] TICKERS = {
         "AAPL", "MSFT", "GOOG", "AMZN", "TSLA", "META", "NVDA", "NFLX", "INTC", "AMD",
         "BABA", "UBER", "LYFT", "ORCL", "IBM", "ADBE", "CRM", "SHOP", "SQ", "PYPL",
         "BA", "JPM", "GS", "BAC", "WFC", "C", "DIS", "NKE", "T", "VZ",
         "PEP", "KO", "PFE", "MRNA", "JNJ", "CVX", "XOM", "BP", "WMT", "COST",
         "TGT", "HD", "LOW", "MCD", "SBUX", "TSM", "QCOM", "ZM", "DOCU", "PLTR"
         };
-        
-        Random random = new Random();
+    private Map<String, Stock> market = new ConcurrentHashMap<>();
+    private Random random = new Random();
 
-        for (int i = 0; i < tickers.length; i++) {
+    public List<Stock> initMarket() {
+        market.clear();
+        
+        
+        for (int i = 0; i < TICKERS.length; i++) {
             String id = String.format("STOCK-%03d", i + 1);
-            String ticker = tickers[i];
+            String ticker = TICKERS[i];
             String name = "Stock-" + ticker;
             int quantity = 0; 
             int availableQuantity = 10 + random.nextInt(991);
@@ -67,21 +66,23 @@ public class MarketService {
     public String getRandomStockId() {
         if (market.isEmpty()) return null;
         List<String> keys = new ArrayList<>(market.keySet());
-        Random random = new Random();
         return keys.get(random.nextInt(keys.size()));
     }
 
     public void buy(String id, int qty) {
         Stock stock = market.get(id);
-
-        if(stock.getAvailableShares() < qty){
-            throw new RuntimeException("Not enough shares to buy");
+        if(stock == null){
+            return;
         }
-        stock.setQuantity(stock.getQuantity() + qty);
-        stock.setAvailableShares(stock.getAvailableShares() - qty);
-        
-        stock.setMarketCap(stock.getQuantity() * stock.getPrice());
-        market.put(id, stock);
+
+        synchronized(stock) {
+            if(stock.getAvailableShares() < qty){
+            throw new RuntimeException("Not enough shares to buy");
+            }
+            stock.setQuantity(stock.getQuantity() + qty);
+            stock.setAvailableShares(stock.getAvailableShares() - qty);        
+            stock.setMarketCap(stock.getQuantity() * stock.getPrice());
+        }
         
         // publish
         messagingTemplate.convertAndSend("/topic/stock", new Stock[]{stock});
@@ -89,15 +90,21 @@ public class MarketService {
 
     public void sell(String id, int qty) {
         Stock stock = market.get(id);
-
-        if(stock.getQuantity() < qty){
-            throw new RuntimeException("You don't have enough shares to sell");
+        if(stock == null){
+            return;
         }
-        stock.setQuantity(stock.getQuantity() - qty);
-        stock.setAvailableShares(stock.getAvailableShares() + qty);
-        stock.setMarketCap(stock.getQuantity() * stock.getPrice());
 
+        synchronized (stock){
+            if(stock.getQuantity() < qty){
+            throw new RuntimeException("You don't have enough shares to sell");
+            }
+            stock.setQuantity(stock.getQuantity() - qty);
+            stock.setAvailableShares(stock.getAvailableShares() + qty);
+            stock.setMarketCap(stock.getQuantity() * stock.getPrice());
+        }
+        
         // publish
-        messagingTemplate.convertAndSend("/topic/stock", new Stock[]{stock});
+        // TODO: violates SRP or SoC seperation of concern
+        messagingTemplate.convertAndSend("/topic/stock", new Stock[]{stock}); 
     }
 }
