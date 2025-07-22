@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Stock, StockProps } from "../../../types/types";
 import { StockRow } from "../../market/components/StockRow";
+import {memo} from 'react';
 
-export const Blotter = ({stocks, onCallback, actionTitle} : StockProps) => {
+
+export const Blotter = memo(({stocks, onCallback, actionTitle} : StockProps) => {
 
     const [purchasedStocks, setPurchasedStocks] = useState<Stock[]>([]);
     
@@ -37,4 +39,4 @@ export const Blotter = ({stocks, onCallback, actionTitle} : StockProps) => {
             </div>
         </div>
     );
-}
+});

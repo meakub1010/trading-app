@@ -1,10 +1,12 @@
 import { StockProps } from "../../../types/types";
 import { StockRow } from "./StockRow";
+import {memo} from 'react';
 
 
-export const Market = ({stocks, onCallback, actionTitle}: StockProps) => {	
-
+export const Market = memo(({stocks, onCallback, actionTitle}: StockProps) => {	
+    
     return (
+        
         <div>
             <h2 className="mb-3">Market Stocks</h2>
             <div className="table-responsive">
@@ -31,4 +33,4 @@ export const Market = ({stocks, onCallback, actionTitle}: StockProps) => {
             </div>
         </div>
     );
-}
+});

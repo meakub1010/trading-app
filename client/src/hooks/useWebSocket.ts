@@ -10,6 +10,7 @@ type UseWebSocketOptions = {
     onError?: (err: any) => void;
     autoReconnect?: boolean;
     reconnectInterval?: number;
+    maxRetry?: number;
     topic?: string;
 };
 
@@ -22,6 +23,7 @@ export const useWebSocket = (
         onError,
         autoReconnect = true,
         reconnectInterval = 3000,
+        maxRetry = 5,
         topic = "/topic/stock"
     }: UseWebSocketOptions = {}
 ) => {
@@ -32,6 +34,10 @@ export const useWebSocket = (
     const reconnectAttemptsRef = useRef(0);
 
     const connect = useCallback(() => {
+        if (socketClientRef.current?.active) {
+            socketClientRef.current.deactivate(); // clean up before reconnect
+        }
+
         const socket = new SockJS(url);
         const stompClient = Stomp.over(() => socket);
 
@@ -60,17 +66,15 @@ export const useWebSocket = (
         stompClient.onWebSocketClose = () => {
             if(onDisconnect) onDisconnect();
 
-            if(autoReconnect && !stompClient.connected && reconnectAttemptsRef.current < 5){
+            if(autoReconnect && !stompClient.connected && reconnectAttemptsRef.current < maxRetry){
                 reconnectAttemptsRef.current += 1;
 
                 reconnectTimeoutRef.current = setTimeout(() => {
-                    // if (socketClientRef.current?.active) {
-                    //     socketClientRef.current.deactivate(); // clean up before reconnect
-                    // }
+                    
                     connect();
                 },reconnectInterval);
             }
-            else if(reconnectAttemptsRef.current >= 5){
+            else if(reconnectAttemptsRef.current >= maxRetry){
                 console.log('Maximum retries exceeded!');
             }
         };
