@@ -5,12 +5,16 @@ import {memo} from 'react';
 
 
 export const Blotter = memo(({stocks, onCallback, actionTitle} : StockProps) => {
-
-    const [purchasedStocks, setPurchasedStocks] = useState<Stock[]>([]);
+    console.log("Blotter component loaded");
+    //const [purchasedStocks, setPurchasedStocks] = useState<Stock[]>([]);
     
-    useEffect(() => {
-        setPurchasedStocks(stocks.filter(i => i.quantity > 0));
-    }, [stocks]);
+    // useEffect(() => {
+    //     setPurchasedStocks(stocks.filter(i => i.quantity > 0));
+    // }, [stocks]);
+
+    // Improvement
+    const purchasedStocks = stocks.filter(stock => stock.quantity > 0);
+
 
     return (
         <div>

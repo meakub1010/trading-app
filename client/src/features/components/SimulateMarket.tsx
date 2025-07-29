@@ -1,11 +1,19 @@
+import { use, useCallback } from "react";
 import { marketApi } from "../../api/marketApi";
 
 export const SimulateMarket = () => {
-    function startSimulation(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-        event.preventDefault();
-        marketApi.startSimulation();
-        console.log("Market simulation started.");
-    } return (
-        <button className="btn btn-primary" onClick={startSimulation}>Simulate Market</button>
+    console.log("SimulateMarket component loaded");
+
+    const handleSimulation = useCallback(async () => {
+        console.log("Simulation button clicked");
+        try {
+            await marketApi.startSimulation();
+        } catch (error) {
+            console.error("Error starting market simulation:", error);
+        }
+    }, []);
+    
+    return (
+        <button className="btn btn-primary" onClick={handleSimulation}>Simulate Market</button>
     );
 };

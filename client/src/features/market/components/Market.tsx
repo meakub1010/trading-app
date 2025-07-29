@@ -4,7 +4,7 @@ import {memo} from 'react';
 
 
 export const Market = memo(({stocks, onCallback, actionTitle}: StockProps) => {	
-    
+    console.log("Market component loaded");
     return (
         
         <div>

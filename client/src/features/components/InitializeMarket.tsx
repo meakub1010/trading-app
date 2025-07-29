@@ -1,22 +1,26 @@
+import { useCallback } from "react";
 import { marketApi } from "../../api/marketApi";
 
 export const InitializeMarket = () => {
+    console.log("InitializeMarket component loaded");
 
-    function initMarket(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-        event.preventDefault();
-        console.log("Market initialized!");
-        marketApi.initMarket();
-    }
+    // function initMarket(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
+    //     event.preventDefault();
+    //     console.log("Market initialized!");
+    //     marketApi.initMarket();
+    // }
 
-
-     function stopSimulation(event: React.MouseEvent<HTMLButtonElement, MouseEvent>): void {
-        event.preventDefault();
-        // Add logic to stop the market simulation here
-        // For example, you might dispatch a Redux action or call a context method
-        console.log("Simulation stopped.");
-    } 
+    const handleInitMarket = useCallback(async () => {
+        console.log("Initialize button clicked");
+        try {
+            await marketApi.initMarket();
+        }
+        catch (error) {
+            console.error("Error initializing market:", error);
+        }
+    }, []); 
 
     return (
-        <button className="btn btn-primary" onClick={initMarket}>Init Market</button>
+        <button className="btn btn-primary" onClick={handleInitMarket}>Init Market</button>
     )
 };

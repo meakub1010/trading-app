@@ -6,10 +6,10 @@ import { StopMarket } from "./StopMarket";
 export const Controlls = memo(() => {
 
     console.log('Controls');
-    
+
     return (
         <>
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-end gap-2 fixed-bottom" >
                 <InitializeMarket />
                 <SimulateMarket />
                 <StopMarket />
