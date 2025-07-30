@@ -17,6 +17,7 @@ export type StockProps = {
 export type StockRowProps = {
     s: Stock;
     onCallback: (id: string, qty: number) => void;
-    actionTitle: string
+    actionTitle: string;
+    //actionType?: 'buy' | 'sell';
 
 }
